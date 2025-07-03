@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solo DnD 5E - Narrative Experience</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #e8e8e8;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1rem;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid #ffd700;
+            color: #ffd700;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .btn:hover {
+            background: rgba(255, 215, 0, 0.2);
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 1rem;
+        }
+
+        .conversation-area {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            overflow-y: auto;
+            max-height: 70vh;
+        }
+
+        .message {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            border-radius: 8px;
+            line-height: 1.6;
+        }
+
+        .user-message {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 4px solid #ffd700;
+            margin-left: 2rem;
+        }
+
+        .dm-message {
+            background: rgba(0, 100, 0, 0.1);
+            border-left: 4px solid #00ff00;
+            margin-right: 2rem;
+        }
+
+        .dm-message::before {
+            content: "🎲 ";
+            font-size: 1.2em;
+        }
+
+        .input-area {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-end;
+        }
+
+        .input-container {
+            flex: 1;
+            position: relative;
+        }
+
+        .user-input {
+            width: 100%;
+            min-height: 60px;
+            max-height: 200px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 1rem;
+            color: #e8e8e8;
+            font-family: inherit;
+            font-size: 1rem;
+            resize: vertical;
+            outline: none;
+        }
+
+        .user-input:focus {
+            border-color: #ffd700;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+        }
+
+        .send-btn {
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+
+        .send-btn:hover {
+            background: rgba(0, 255, 0, 0.2);
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 1rem;
+            color: #ffd700;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .loading::after {
+            content: "🎲 The Dungeon Master is thinking...";
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .status-bar {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.5rem 1rem;
+            border-top: 1px solid #333;
+            font-size: 0.9rem;
+            color: #ccc;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .character-info {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .character-stat {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .character-stat strong {
+            color: #ffd700;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .header-controls {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .input-area {
+                flex-direction: column;
+            }
+
+            .send-btn {
+                align-self: flex-end;
+            }
+
+            .status-bar {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .character-info {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎲 Solo DnD 5E - Narrative Experience</h1>
+        <div class="header-controls">
+            <button class="btn" onclick="saveGame()">💾 Save</button>
+            <button class="btn" onclick="returnToStart()">🏠 Return to Start</button>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="conversation-area" id="conversationArea">
+            <div class="message dm-message">
+                Welcome to your solo DnD 5E adventure! I am your Dungeon Master, ready to guide you through an immersive story. 
+                Simply type your actions, thoughts, or questions naturally, and I'll respond as your DM would. 
+                What would you like to do?
+            </div>
+        </div>
+
+        <div class="loading" id="loadingIndicator"></div>
+
+        <div class="input-area">
+            <div class="input-container">
+                <textarea 
+                    class="user-input" 
+                    id="userInput" 
+                    placeholder="Describe your actions, ask questions, or interact with the world naturally..."
+                    rows="3"
+                ></textarea>
+            </div>
+            <button class="send-btn" id="sendBtn" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <div class="character-info">
+            <div class="character-stat">
+                <strong>Character:</strong> <span id="characterName">Unknown</span>
+            </div>
+            <div class="character-stat">
+                <strong>Level:</strong> <span id="characterLevel">1</span>
+            </div>
+            <div class="character-stat">
+                <strong>Class:</strong> <span id="characterClass">Unknown</span>
+            </div>
+        </div>
+        <div class="session-info">
+            <span id="sessionStatus">Ready</span>
+        </div>
+    </div>
+
+    <script>
+        let currentCampaign = null;
+        let isProcessing = false;
+
+        // Initialize the interface
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-resize textarea
+            const textarea = document.getElementById('userInput');
+            textarea.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+            });
+
+            // Enter to send (Shift+Enter for new line)
+            textarea.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            // Load initial campaign state
+            loadCurrentCampaign();
+        });
+
+        async function sendMessage() {
+            if (isProcessing) return;
+
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+
+            // Add user message to conversation
+            addMessage(message, 'user');
+            input.value = '';
+            input.style.height = 'auto';
+
+            // Show loading
+            setLoading(true);
+            isProcessing = true;
+
+            try {
+                const response = await fetch('/api/campaign/current/action', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: message,
+                        character_id: currentCampaign?.active_character?.id || 'player'
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Add DM response
+                    addMessage(data.dm_response, 'dm');
+                    
+                    // Update character info if available
+                    if (data.character_info) {
+                        updateCharacterInfo(data.character_info);
+                    }
+                } else {
+                    addMessage("I'm sorry, but I'm having trouble processing that right now. Please try again.", 'dm');
+                }
+            } catch (error) {
+                console.error('Error sending message:', error);
+                addMessage("I'm experiencing some technical difficulties. Please try again in a moment.", 'dm');
+            } finally {
+                setLoading(false);
+                isProcessing = false;
+            }
+        }
+
+        function addMessage(content, type) {
+            const conversationArea = document.getElementById('conversationArea');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}-message`;
+            messageDiv.textContent = content;
+            conversationArea.appendChild(messageDiv);
+            conversationArea.scrollTop = conversationArea.scrollHeight;
+        }
+
+        function setLoading(loading) {
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const sendBtn = document.getElementById('sendBtn');
+            
+            if (loading) {
+                loadingIndicator.classList.add('show');
+                sendBtn.disabled = true;
+                sendBtn.textContent = 'Sending...';
+            } else {
+                loadingIndicator.classList.remove('show');
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'Send';
+            }
+        }
+
+        async function loadCurrentCampaign() {
+            try {
+                const response = await fetch('/api/campaign/current');
+                const data = await response.json();
+                
+                if (data.success && data.campaign) {
+                    currentCampaign = data.campaign;
+                    updateCharacterInfo(data.campaign.active_character || {});
+                }
+            } catch (error) {
+                console.error('Error loading campaign:', error);
+            }
+        }
+
+        function updateCharacterInfo(character) {
+            document.getElementById('characterName').textContent = character.name || 'Unknown';
+            document.getElementById('characterLevel').textContent = character.level || '1';
+            document.getElementById('characterClass').textContent = character.class || 'Unknown';
+        }
+
+        async function saveGame() {
+            try {
+                const response = await fetch('/api/campaign/current/save', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Game saved successfully!');
+                } else {
+                    alert('Failed to save game.');
+                }
+            } catch (error) {
+                console.error('Error saving game:', error);
+                alert('Error saving game.');
+            }
+        }
+
+        function returnToStart() {
+            if (confirm('Return to start screen? Your game will be saved automatically.')) {
+                saveGame().then(() => {
+                    window.location.href = 'http://localhost:5001/';
+                });
+            }
+        }
+    </script>
+</body>
+</html>

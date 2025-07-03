@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Consumer-Friendly Launcher for Solo DnD 5E
+Consumer-Friendly Launcher for SoloHeart
 Simple setup and launch for non-technical users.
 """
 
@@ -11,36 +11,34 @@ import os
 import webbrowser
 
 def main():
-    print("🎲 Solo DnD 5E - AI Adventure Game")
+    print("🎲 SoloHeart - AI Adventure Game")
     print("=" * 40)
     
-    # Check if .env exists and has API key
+    # Check if .env exists and configure Ollama
     if not os.path.exists('.env'):
-        print("🔑 First time setup - you need an OpenAI API key")
-        print("Get one at: https://platform.openai.com/api-keys")
-        api_key = input("Enter your API key (starts with 'sk-'): ").strip()
+        print("🔧 First time setup - configuring Ollama LLM service")
+        print("Make sure Ollama is running with LLaMA 3 model available")
+        print("Install Ollama from: https://ollama.ai")
+        print("Then run: ollama pull llama3")
         
-        if not api_key.startswith('sk-'):
-            print("❌ Invalid API key format")
-            return
-            
-        # Create .env file
+        # Create .env file with Ollama configuration
         with open('.env', 'w') as f:
-            f.write(f"OPENAI_API_KEY={api_key}\n")
-            f.write("OPENAI_MODEL=gpt-4o-mini\n")
+            f.write("OLLAMA_MODEL=llama3\n")
+            f.write("OLLAMA_BASE_URL=http://localhost:11434\n")
             f.write("FLASK_SECRET_KEY=your_secret_key_here\n")
             f.write("FLASK_ENV=production\n")
             f.write("DEBUG=False\n")
             f.write("HOST=0.0.0.0\n")
             f.write("PORT=5001\n")
         
-        print("✅ Setup complete!")
+        print("✅ Ollama configuration complete!")
+        print("💡 Make sure Ollama is running before starting the game")
     
     print("🚀 Starting game...")
     
     # Start the game
     try:
-        process = subprocess.Popen([sys.executable, 'start_screen_interface.py'])
+        process = subprocess.Popen([sys.executable, 'solo_heart/simple_unified_interface.py'])
         time.sleep(3)
         
         print("✅ Game started!")
